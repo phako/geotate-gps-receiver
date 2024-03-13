@@ -1,0 +1,3 @@
+[submodule "geotate-downloader/python-scsi"]
+	path = geotate-downloader/python-scsi
+	url = https://github.com/phako/python-scsi.git
