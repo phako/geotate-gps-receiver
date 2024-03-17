@@ -46,6 +46,7 @@ class AppWindow(Adw.ApplicationWindow):
         stack.add_named(self.device_panel, "device-info")
         self.stack = stack
         self.set_content(box)
+        self.battery_timeout = None
 
         self.monitor.rescan()
 
@@ -55,20 +56,23 @@ class AppWindow(Adw.ApplicationWindow):
         self.header.set_show_end_title_buttons(True)
         self.device_panel.set_device(device)
         self.update_battery()
-        GLib.timeout_add_seconds(5, self.update_battery)
+        self.battery_timeout = GLib.timeout_add_seconds(5, self.update_battery)
 
     def device_error(self, obj, path):
         self.status.set_title("Could not access Geotate device")
         self.status.set_description(f"It looks like the permissions on /dev/{path} do not permit access")
 
     def update_battery(self):
+        self.battery_icon.set_visible(True)
         level = self.device_panel.device.get_battery_level()
         if level < 100:
             self.battery_icon.set_from_icon_name("battery-low-charging-symbolic")
-            self.battery_icon.set_tooltip_text("Charging...")
+            self.battery_icon.set_tooltip_text("Charging")
+            self.device_panel.charge_level.set_detail("Charging")
         elif level == 100:
             self.battery_icon.set_from_icon_name("battery-full-charged-symbolic")
-            self.battery_icon.set_tooltip_text("Charged.")
+            self.battery_icon.set_tooltip_text("Charged")
+            self.device_panel.charge_level.set_detail("Charged")
 
         return True
     
@@ -76,3 +80,7 @@ class AppWindow(Adw.ApplicationWindow):
         self.stack.set_visible_child_name("status")
         self.header.set_show_end_title_buttons(False)
         self.device_panel.set_device(None)
+        self.battery_icon.set_visible(False)
+        if self.battery_timeout:
+            GLib.Source.remove(self.battery_timeout)
+            self.battery_timeout = None

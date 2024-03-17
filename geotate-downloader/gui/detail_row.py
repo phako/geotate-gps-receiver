@@ -23,3 +23,8 @@ class DetailRow(Adw.ActionRow):
         l.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         self.add_suffix(l)
         self.set_title_lines(1)
+        self.detail = l
+
+    def set_detail(self, detail: str = None):
+        if detail:
+            self.detail.set_text(detail)

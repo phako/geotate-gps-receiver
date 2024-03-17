@@ -76,12 +76,12 @@ class FileBackend(Backend):
         return f"Geotate file backend feeding from {self.lba_folder}"
 
 
-class _CaptureCapabilities:
+class CaptureCapabilities:
     INTERVAL_SETABLE = 0
     QUALITY_SETABLE = 1
     ONE_SHOT_CAPABLE = 2
     PERIODIC_CAPABLE = 3
-    CONTINOUS_CAPABLE = 4
+    CONTINUOUS_CAPABLE = 4
     BATTERY_MULTILEVEL = 5
     CAPTURE_DELAY_SETABLE = 6
     NO_MOTION_INTERVAL_AVAILABLE = 7
@@ -95,15 +95,15 @@ class _CaptureCapabilities:
     
     def __str__(self):
         b = ('no', 'yes')
-        return f"Capture interval setable: {b[self[_CaptureCapabilities.INTERVAL_SETABLE]]}\n" \
-               f"Capture quality setable: {b[self[_CaptureCapabilities.QUALITY_SETABLE]]}\n" \
-               f"Supports one shot capture: {b[self[_CaptureCapabilities.ONE_SHOT_CAPABLE]]}\n" \
-               f"Supports periodic capture: {b[self[_CaptureCapabilities.PERIODIC_CAPABLE]]}\n" \
-               f"Supports continuos capture: {b[self[_CaptureCapabilities.CONTINOUS_CAPABLE]]}\n" \
-               f"Battery supports multiple levels: {b[self[_CaptureCapabilities.BATTERY_MULTILEVEL]]}\n" \
-               f"Capture delay is setable: {b[self[_CaptureCapabilities.CAPTURE_DELAY_SETABLE]]}\n" \
-               f"No motion interval is available: {b[self[_CaptureCapabilities.NO_MOTION_INTERVAL_AVAILABLE]]}\n" \
-               f"Capture divider available: {b[self[_CaptureCapabilities.CAPTURE_DIVIDER]]}"
+        return f"Capture interval setable: {b[self[CaptureCapabilities.INTERVAL_SETABLE]]}\n" \
+               f"Capture quality setable: {b[self[CaptureCapabilities.QUALITY_SETABLE]]}\n" \
+               f"Supports one shot capture: {b[self[CaptureCapabilities.ONE_SHOT_CAPABLE]]}\n" \
+               f"Supports periodic capture: {b[self[CaptureCapabilities.PERIODIC_CAPABLE]]}\n" \
+               f"Supports continuous capture: {b[self[CaptureCapabilities.CONTINUOUS_CAPABLE]]}\n" \
+               f"Battery supports multiple levels: {b[self[CaptureCapabilities.BATTERY_MULTILEVEL]]}\n" \
+               f"Capture delay is setable: {b[self[CaptureCapabilities.CAPTURE_DELAY_SETABLE]]}\n" \
+               f"No motion interval is available: {b[self[CaptureCapabilities.NO_MOTION_INTERVAL_AVAILABLE]]}\n" \
+               f"Capture divider available: {b[self[CaptureCapabilities.CAPTURE_DIVIDER]]}"
 
 
 class CaptureData1:
@@ -170,6 +170,7 @@ class GeotateDevice(GObject.Object):
         print(self.backend)
 
         self.get_device_info()
+        self.get_device_id()
         #self.get_capture_config()
 
     def get_device_info(self):
@@ -180,7 +181,7 @@ class GeotateDevice(GObject.Object):
         self.maximum_capture_count = struct.unpack("<L", r[0x9c:0xa0])[0]
         self.binary_capture_base_lba = struct.unpack("<L", r[0xa4:0xa8])
         self.capture_data_base_lba = struct.unpack("<L", r[0xa8:0xac])[0]
-        self.capture_capabilites = _CaptureCapabilities(struct.unpack("<L", r[0xcc:0xd0])[0])
+        self.capture_capabilites = CaptureCapabilities(struct.unpack("<L", r[0xcc:0xd0])[0])
 
     def get_device_id(self):
         r = self.backend.read(GeotateDevice.DEVICE_ID)
