@@ -14,6 +14,7 @@ from gi.repository import GUdev
 
 from .device_status import DeviceStatus
 from device import GeotateDevice, DeviceMonitor
+from . import status_page
 
 class AppWindow(Adw.ApplicationWindow):
     def __init__(self, app):
@@ -34,13 +35,9 @@ class AppWindow(Adw.ApplicationWindow):
 
         box.prepend(header)
         stack = Gtk.Stack.new()
-        status = Adw.StatusPage.new()
-        status.set_vexpand(True)
-        status.set_title("Waiting for Geotate device to appear...")
-        status.set_description("Plug in device to USB")
-        status.set_icon_name("media-removable-symbolic")
-        self.status = status
-        stack.add_named(status, "status")
+        self.status, self.retry_button = status_page.get_status_page()
+        self.retry_button.connect("clicked", lambda x: self.monitor.rescan())
+        stack.add_named(self.status, "status")
         box.append(stack)
         self.device_panel = DeviceStatus()
         stack.add_named(self.device_panel, "device-info")
@@ -61,6 +58,7 @@ class AppWindow(Adw.ApplicationWindow):
     def device_error(self, obj, path):
         self.status.set_title("Could not access Geotate device")
         self.status.set_description(f"It looks like the permissions on /dev/{path} do not permit access")
+        self.retry_button.set_visible(True)
 
     def update_battery(self):
         self.battery_icon.set_visible(True)
@@ -84,3 +82,6 @@ class AppWindow(Adw.ApplicationWindow):
         if self.battery_timeout:
             GLib.Source.remove(self.battery_timeout)
             self.battery_timeout = None
+        self.status.set_title("Waiting for Geotate device to appear…")
+        self.status.set_description(f"Plug in device to USB")
+        self.retry_button.set_visible(False)

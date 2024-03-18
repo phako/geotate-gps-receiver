@@ -4,3 +4,4 @@
 from .detail_row import DetailRow
 from .appwindow import AppWindow
 from .device_status import DeviceStatus
+from .captures_page import Captures
