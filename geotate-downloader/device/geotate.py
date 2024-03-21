@@ -108,6 +108,8 @@ class CaptureCapabilities:
 
 class CaptureData1:
     def __init__(self, record: typing.ByteString):
+        self.capture_id = 0
+        self.record_offset = 0
         record_size = int(record[0])
         # print("==> ", record_size)
 
@@ -120,6 +122,7 @@ class CaptureData1:
         # print(struct.unpack("<L", f)[0])
 
         self.track_id = int(record[7])
+        self.capture_id = int(record[4])
         # print(int(record[2]))
         # print(int(record[3]))
 
@@ -131,11 +134,12 @@ class CaptureData1:
         # print("0x18:" , struct.unpack("<L", record[0x18:0x1c])[0])
         # print(struct.unpack("<H", record[0x1c:0x1e])[0])
         # print(struct.unpack("<H", record[0x1e:0x20])[0])
-        self.capture_binary_data_offset = struct.unpack("<L", record[0x14:0x18])[0]
-        self.capture_binary_header_size = struct.unpack("<H", record[0x1c:0x1e])[0]
+        self.capture_binary_data_offset = struct.unpack("<L", record[0x10:0x14])[0]
+        self.capture_gre_header_offset = struct.unpack("<L", record[0x14:0x18])[0]
+        self.capture_gre_header_size = struct.unpack("<H", record[0x1c:0x1e])[0]
 
     def __str__(self):
-        return f"Capture {self.track_id}, binary offset: {self.capture_binary_data_offset}, binary header size: {self.capture_binary_header_size}, full binary size: {self.capture_binary_header_size + self.binary_size}"
+        return f"Capture {self.capture_id}, Track {self.track_id}, binary offset: {self.capture_binary_data_offset}, gre header size: {self.capture_gre_header_size}, full binary size: {self.capture_gre_header_size + self.binary_size}"
 
 
 class GeotateDevice(GObject.Object):
@@ -158,18 +162,25 @@ class GeotateDevice(GObject.Object):
         self.device_version_string = "Unknown"
         self.device_version = 0
         self.device_id = "Unknown"
+        self.nxp_guid = None
 
         self.capture_cache = []
         self.track_to_capture_count = {}
         self.captures_per_track = dict([(0, 0)])
+        self.maximum_capture_count = 0
         self.track_count = 0
         self.capture_count = 0
+        self.gre_capture_base_lba = 0
+        self.binary_data_base_lba = 0
+        self.capture_data_base_lba = 0
+        self.capture_capabilites = None
 
         self.backend = backend
         print(self.backend)
 
         self.get_device_info()
         self.get_device_id()
+        self.find_capture_data_start()
         # self.get_capture_config()
 
     def get_device_info(self):
@@ -178,8 +189,16 @@ class GeotateDevice(GObject.Object):
         self.device_version_string = f"{r[0xd0]}.{r[0xd1]}.{r[0xd2]}.{r[0xd3]}"
         self.nxp_guid = str(uuid.UUID(bytes=bytes(r[0x80:0x90])))
         self.maximum_capture_count = struct.unpack("<L", r[0x9c:0xa0])[0]
-        self.binary_capture_base_lba = struct.unpack("<L", r[0xa4:0xa8])
+
+        # This is the first LBA where the samples GPS data is stored
+        self.binary_data_base_lba = struct.unpack("<L", r[0xa0:0xa4])[0]
+
+        # This is the first LBS where hte GRE record for a capture is stored
+        self.gre_capture_base_lba = struct.unpack("<L", r[0xa4:0xa8])[0]
+
+        # This is the first LBA where the information about a capture is stored
         self.capture_data_base_lba = struct.unpack("<L", r[0xa8:0xac])[0]
+
         self.capture_capabilites = CaptureCapabilities(struct.unpack("<L", r[0xcc:0xd0])[0])
 
     def get_device_id(self):
@@ -240,6 +259,8 @@ class GeotateDevice(GObject.Object):
         r = self.backend.read(self.capture_data_base_lba + current_lba)
         data_offset = record_number * 4
         local_258 = 0
+        
+        # FIXME: We seem to skip the first to captures
         while record_number < 0x10:
             header_data = r[data_offset:]
             record_size = int(r[0])
@@ -273,6 +294,7 @@ class GeotateDevice(GObject.Object):
 
                 data_offset = int(record[1])
                 d = CaptureData1(record[0:0x20])
+                #d.capture_id = self.capture_count
                 d.record_offset = record_offset
                 self.capture_cache.append(d)
                 print(d)
@@ -295,6 +317,51 @@ class GeotateDevice(GObject.Object):
                 current_track = c.track_id
         if 0 < self.track_count or 0 < self.captures_per_track[0]:
             self.track_count += 1
+
+    def get_capture(self, capture_id: int):
+        cache_entry : CaptureData1 = None
+        for c in self.capture_cache:
+            if c.capture_id == capture_id:
+                cache_entry = c
+                break
+
+        header = self.backend.read(cache_entry.capture_gre_header_offset + self.gre_capture_base_lba)
+        print("bhs: ", cache_entry.capture_gre_header_size)
+        # This is the GRE header
+        with open('header.bin', 'wb') as f:
+            f.write(header[:cache_entry.capture_gre_header_size])
+
+        capture_info_lba = cache_entry.record_offset >> 4
+        print("record lba: ", capture_info_lba)
+        if capture_info_lba != self.maximum_capture_count:
+            info = self.backend.read(capture_info_lba + self.capture_data_base_lba)
+            record_number = cache_entry.record_offset & 0xf
+            info = info[record_number:record_number+0x20]
+            print(info[0])
+
+            # This is some capture cache sanity checks
+            binary_size = struct.unpack("<H", info[0x1e:])[0]
+            print("binary size", binary_size << 9)
+            print("track: ", info[0x7], cache_entry.track_id)
+            print("capture id", info[0x4], cache_entry.capture_id)
+            chain_offset = struct.unpack("<L", info[0x10:0x14])[0]
+            print(chain_offset)
+
+            # This is our limitation, we need to read in the data in 512 byte chunks starting at
+            # chain offset
+            with open("body.bin", "wb") as f:
+                pass
+
+            # We need to download the captured data in chunks
+            for i in range(0,256):
+                body = self.backend.read(chain_offset + self.binary_data_base_lba + i)
+                # Untested, my device has a newer version. But apparently those devices need the data
+                # bits reversed
+                if self.device_version < 0x8040000:
+                    body = [int('{:08b}'.format(n)[::-1], 2).to_bytes() for n in body]
+                with open("body.bin", "ab") as f:
+                    f.write(body)
+
 
     def __str__(self):
         return f"Geotate device with backend {self.backend}\n" \

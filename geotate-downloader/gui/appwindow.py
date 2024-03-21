@@ -13,6 +13,7 @@ from gi.repository import Adw
 from gi.repository import GUdev
 
 from .device_status import DeviceStatus
+from .captures_page import Captures
 from device import GeotateDevice, DeviceMonitor
 from . import status_page
 
@@ -26,32 +27,47 @@ class AppWindow(Adw.ApplicationWindow):
         self.monitor.connect("device-error", self.device_error)
 
         self.set_default_size(480,640)
-        box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+        box = Adw.ToolbarView() #Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
         header = Adw.HeaderBar.new()
         self.battery_icon = Gtk.Image.new()
         header.pack_end(self.battery_icon)
         header.set_show_end_title_buttons(False)
         self.header = header
 
-        box.prepend(header)
+        box.add_top_bar(header)
         stack = Gtk.Stack.new()
         self.status, self.retry_button = status_page.get_status_page()
         self.retry_button.connect("clicked", lambda x: self.monitor.rescan())
+
         stack.add_named(self.status, "status")
-        box.append(stack)
+        box.set_content(stack)
         self.device_panel = DeviceStatus()
-        stack.add_named(self.device_panel, "device-info")
         self.stack = stack
         self.set_content(box)
         self.battery_timeout = None
+
+        self.captures = Captures()
+
+        self.view_stack = Adw.ViewStack()
+        self.view_stack.add_titled_with_icon(self.device_panel, "device-info", "Device information", "media-flash-symbolic")
+        stack.add_named(self.view_stack, "device")
+        self.view_stack.add_titled_with_icon(self.captures, "captures", "Captures", "mark-location-symbolic")
+        box.set_reveal_bottom_bars(True)
+
+        switcher = Adw.ViewSwitcherBar()
+        switcher.set_stack(self.view_stack)
+        box.add_bottom_bar(switcher)
+        box.set_reveal_bottom_bars(True)
+        switcher.set_reveal(True)
 
         self.monitor.rescan()
 
     def device_available(self, obj, device: GeotateDevice):
         print("Device available....")
-        self.stack.set_visible_child_name("device-info")
+        self.stack.set_visible_child_name("device")
         self.header.set_show_end_title_buttons(True)
         self.device_panel.set_device(device)
+        self.captures.set_device(device)
         self.update_battery()
         self.battery_timeout = GLib.timeout_add_seconds(5, self.update_battery)
 
@@ -78,6 +94,7 @@ class AppWindow(Adw.ApplicationWindow):
         self.stack.set_visible_child_name("status")
         self.header.set_show_end_title_buttons(False)
         self.device_panel.set_device(None)
+        self.captures.set_device(None)
         self.battery_icon.set_visible(False)
         if self.battery_timeout:
             GLib.Source.remove(self.battery_timeout)

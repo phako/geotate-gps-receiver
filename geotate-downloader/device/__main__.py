@@ -8,8 +8,12 @@ from . import SCSIBackend
 if __name__ == "__main__":
     #d = GeotateDevice(FileBackend("/home/jens/bilora/deviceinfo"))
     d = GeotateDevice(SCSIBackend("", "sg1"))
-    d.find_capture_data_start()
+    r = d.backend.read(2)
+    with open("lba_2.bin", "wb") as f:
+        f.write(r)
+    #d.find_capture_data_start()
     d.get_capture_config()
+    d.get_capture(2)
     print(d)
 
     print(f"Captures: {d.capture_count}")
