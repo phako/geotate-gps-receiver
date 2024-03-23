@@ -1,0 +1,91 @@
+                             //
+                             // ram 
+                             // ram:0000:0000-ram:0000:01ff
+                             //
+             assume DF = 0x0  (Default)
+       0000:0000 fa              CLI
+       0000:0001 33 c0           XOR        AX,AX
+       0000:0003 8e d0           MOV        SS,AX
+       0000:0005 bc 00 7c        MOV        SP,0x7c00
+       0000:0008 8b f4           MOV        SI,SP
+       0000:000a 50              PUSH       AX
+       0000:000b 07              POP        ES
+       0000:000c 50              PUSH       AX
+       0000:000d 1f              POP        DS
+       0000:000e fb              STI
+       0000:000f fc              CLD
+                             Copy ourselves to memory location 00000:0x0600
+       0000:0010 bf 00 06        MOV        DI,0x600
+       0000:0013 b9 00 01        MOV        CX,0x100
+       0000:0016 f2 a5           MOVSW.REP  ES:DI,SI
+       0000:0018 ea 1d 06        JMPF       LAB_0000_061d
+                 00 00
+       0000:001d be be 07        MOV        SI,0x7be
+       0000:0020 b3 04           MOV        BL,0x4
+                             ReadPartitionTable                              XREF[1]:     0000:0031(j)  
+       0000:0022 80 3c 80        CMP        byte ptr [SI],0x80
+       0000:0025 74 0e           JZ         LAB_0000_0035
+       0000:0027 80 3c 00        CMP        byte ptr [SI],0x0
+       0000:002a 75 1c           JNZ        LAB_0000_0048
+       0000:002c 83 c6 10        ADD        SI,0x10
+       0000:002f fe cb           DEC        BL
+       0000:0031 75 ef           JNZ        ReadPartitionTable
+       0000:0033 cd 18           INT        0x18
+                             LAB_0000_0035                                   XREF[1]:     0000:0025(j)  
+       0000:0035 8b 14           MOV        DX,word ptr [SI]
+       0000:0037 8b 4c 02        MOV        CX,word ptr [SI + 0x2]
+       0000:003a 8b ee           MOV        BP,SI
+                             LAB_0000_003c                                   XREF[1]:     0000:0046(j)  
+       0000:003c 83 c6 10        ADD        SI,0x10
+       0000:003f fe cb           DEC        BL
+       0000:0041 74 1a           JZ         LAB_0000_005d
+       0000:0043 80 3c 00        CMP        byte ptr [SI],0x0
+       0000:0046 74 f4           JZ         LAB_0000_003c
+                             LAB_0000_0048                                   XREF[1]:     0000:002a(j)  
+       0000:0048 be 8b 06        MOV        SI,0x68b
+                             PrintErrorMessage                               XREF[3]:     0000:0059(j), 0000:0076(j), 
+                                                                                          0000:0082(j)  
+       0000:004b ac              LODSB      SI
+       0000:004c 3c 00           CMP        AL,0x0
+       0000:004e 74 0b           JZ         LAB_0000_005b
+       0000:0050 56              PUSH       SI
+       0000:0051 bb 07 00        MOV        BX,0x7
+       0000:0054 b4 0e           MOV        AH,0xe
+       0000:0056 cd 10           INT        0x10
+       0000:0058 5e              POP        SI
+       0000:0059 eb f0           JMP        PrintErrorMessage
+                             LAB_0000_005b                                   XREF[2]:     0000:004e(j), 0000:005b(j)  
+       0000:005b eb fe           JMP        LAB_0000_005b
+                             LAB_0000_005d                                   XREF[1]:     0000:0041(j)  
+       0000:005d bf 05 00        MOV        DI,0x5
+                             LoadOperatingSystem                             XREF[1]:     0000:0071(j)  
+       0000:0060 bb 00 7c        MOV        BX,0x7c00
+       0000:0063 b8 01 02        MOV        AX,0x201
+       0000:0066 57              PUSH       DI
+       0000:0067 cd 13           INT        0x13
+       0000:0069 5f              POP        DI
+       0000:006a 73 0c           JNC        LAB_0000_0078
+       0000:006c 33 c0           XOR        AX,AX
+       0000:006e cd 13           INT        0x13
+       0000:0070 4f              DEC        DI
+       0000:0071 75 ed           JNZ        LoadOperatingSystem
+       0000:0073 be a3 06        MOV        SI,0x6a3
+       0000:0076 eb d3           JMP        PrintErrorMessage
+                             LAB_0000_0078                                   XREF[1]:     0000:006a(j)  
+       0000:0078 be c2 06        MOV        SI,0x6c2
+       0000:007b bf fe 7d        MOV        DI,0x7dfe
+       0000:007e 81 3d 55 aa     CMP        word ptr [DI],0xaa55
+       0000:0082 75 c7           JNZ        PrintErrorMessage
+       0000:0084 8b f5           MOV        SI,BP
+       0000:0086 ea 00 7c        JMPF       LAB_0000_7c00
+                 00 00
+       0000:008b 49 6e 76        ds         "Invalid partition table"
+                 61 6c 69 
+                 64 20 70 
+       0000:00a3 45 72 72        ds         "Error loading operating system"
+                 6f 72 20 
+                 6c 6f 61 
+       0000:00c2 4d 69 73        ds         "Missing operating system"
+                 73 69 6e 
+                 67 20 6f 
+
