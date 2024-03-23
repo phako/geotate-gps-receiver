@@ -376,5 +376,6 @@ class GeotateDevice(GObject.Object):
 
     def __str__(self):
         return f"Geotate device with backend {self.backend}\n" \
+               f"Device id: {self.device_id}\n" \
                f"Device version: {self.device_version_string}\n" \
                f"Capture flags:\n {self.capture_capabilites}"
