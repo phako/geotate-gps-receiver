@@ -203,8 +203,9 @@ class GeotateDevice(GObject.Object):
 
     def get_device_id(self):
         r = self.backend.read(GeotateDevice.DEVICE_ID)
-        value = struct.unpack("<L", r[2:6])[0]
-        self.device_id = "{:02x}-{:02x}-{:08x}".format(r[0], r[1], value)
+        value = struct.unpack("<L", r[0:4])[0]
+        print(r)
+        self.device_id = "{:02x}-{:02x}-{:08x}".format(r[5], r[4], value)
 
     def get_battery_level(self):
         r = self.backend.read(GeotateDevice.BATTERY_LEVEL)
