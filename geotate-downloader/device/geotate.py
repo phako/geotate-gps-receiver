@@ -142,6 +142,21 @@ class CaptureData1:
         return f"Capture {self.capture_id}, Track {self.track_id}, binary offset: {self.capture_binary_data_offset}, gre header size: {self.capture_gre_header_size}, full binary size: {self.capture_gre_header_size + self.binary_size}"
 
 
+class CaptureSettings:
+    def __init__(self, r: bytearray):
+        self.interval = struct.unpack("<L", r[:4])[0]
+        self.quality = r[4]
+        self.mode = r[5]
+        self.continuous = struct.unpack("<L", r[6:10])[0]
+        self.delay = struct.unpack("<H", r[10:12])[0]
+        self.no_motion_interval = struct.unpack("<H", r[12:14])[0]
+        print(self)
+
+    def __str__(self):
+        return f"CaptureSettings, interval {self.interval}, quality: {self.quality} mode: {self.mode} continous: " + \
+               f"{self.continuous} delay: {self.delay} no motion interval: {self.no_motion_interval}"
+        pass
+
 class GeotateDevice(GObject.Object):
     __gtype_name__ = "GeotateDevice"
 
@@ -174,6 +189,7 @@ class GeotateDevice(GObject.Object):
         self.binary_data_base_lba = 0
         self.capture_data_base_lba = 0
         self.capture_capabilites = None
+        self.capture_config = None
 
         self.backend = backend
         print(self.backend)
@@ -181,7 +197,7 @@ class GeotateDevice(GObject.Object):
         self.get_device_info()
         self.get_device_id()
         self.find_capture_data_start()
-        # self.get_capture_config()
+        self.get_capture_config()
 
     def get_device_info(self):
         r = self.backend.read(GeotateDevice.DEVICE_INFO)
@@ -213,13 +229,7 @@ class GeotateDevice(GObject.Object):
 
     def get_capture_config(self):
         r = self.backend.read(GeotateDevice.CAPTURE_CONFIG)
-        interval = struct.unpack("<L", r[:4])
-        quality = r[4]
-        mode = r[5]
-        continous = struct.unpack("<L", r[6:10])
-        delay = struct.unpack("<H", r[10:12])
-        no_motion_interval = struct.unpack("<H", r[12:14])
-        print(f"{interval} {quality} {mode} {continous} {delay} {no_motion_interval}")
+        self.capture_config = CaptureSettings(r)
 
     def get_rtc(self):
         r = self.backend.read(GeotateDevice.RTC)
