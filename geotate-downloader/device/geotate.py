@@ -64,7 +64,7 @@ class FileBackend(Backend):
         self.lba_folder = lba_folder
 
     def read(self, lba: int) -> type[bytearray]:
-        path = f"{self.lba_folder}/lba_{lba}.bin"
+        path = f"{self.lba_folder}/lba-{lba:08}.bin"
         print(f"Reading from {path}")
         with open(path, "rb") as f:
             return f.read()
