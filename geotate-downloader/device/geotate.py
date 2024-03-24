@@ -299,18 +299,19 @@ class GeotateDevice(GObject.Object):
                 # print(f"Record offset : {record_offset}")
                 record = record[data_offset:]
                 # FIXME: End of data markers...
-                if record[0] == 0xff:
+                if record[0] == 0xff or record[0] == 0xfe:
                     keep_parsing = False
                     break;
-
-                data_offset = int(record[1])
-                d = CaptureData1(record[0:0x20])
-                #d.capture_id = self.capture_count
-                d.record_offset = record_offset
-                self.capture_cache.append(d)
-                print(d)
+                    
+                if record[0] != 0:
+                    data_offset = int(record[1])
+                    d = CaptureData1(record[0:0x20])
+                    #d.capture_id = self.capture_count
+                    d.record_offset = record_offset
+                    self.capture_cache.append(d)
+                    print(d)
+                    self.capture_count += 1
                 record_number += 1
-                self.capture_count += 1
 
         current_capture = 0
         self.track_count = 0
