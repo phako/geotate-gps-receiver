@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2023 Jens Georg <mail@jensge.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from .geotate import GeotateDevice, SCSIBackend, FileBackend
 import gi
 
 gi.require_version('GUdev', '1.0')
@@ -8,16 +9,14 @@ gi.require_version('GUdev', '1.0')
 from gi.repository import GLib, Gio, GObject
 from gi.repository import GUdev
 
-from .geotate import GeotateDevice
-from .geotate import SCSIBackend
-
 
 class DeviceMonitor(GObject.Object):
     __gtype_name__ = "DeviceMonitor"
         
-    def __init__(self):
+    def __init__(self, simulate: str = None):
         super().__init__()
 
+        self.simulation_path = simulate
         self.devpath = None
         self.device = None
 
@@ -26,6 +25,11 @@ class DeviceMonitor(GObject.Object):
         self.client.connect("uevent", self.on_uevent)
 
     def rescan(self):
+        if self.simulation_path:
+            self.device = GeotateDevice(FileBackend(self.simulation_path))
+            self.emit("device-available", self.device)
+            return
+
         devices = self.client.query_by_subsystem("usb")
         for device in devices:
             self.on_uevent(self.client, "add", device)

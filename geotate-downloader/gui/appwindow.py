@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2023 Jens Georg <mail@jensge.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
 import gi
 
 gi.require_version('Gtk', '4.0')
@@ -17,17 +18,18 @@ from .captures_page import Captures
 from device import GeotateDevice, DeviceMonitor
 from . import status_page
 
+
 class AppWindow(Adw.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application = app, title = "Geotate device tool")
 
-        self.monitor = DeviceMonitor()
+        self.monitor = DeviceMonitor(os.environ.get("GEOTATE_DATA_DUMP", None))
         self.monitor.connect("device-available", self.device_available)
         self.monitor.connect("device-unavailable", self.device_unavailable)
         self.monitor.connect("device-error", self.device_error)
 
         self.set_default_size(480,640)
-        box = Adw.ToolbarView() #Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+        box = Adw.ToolbarView()
         header = Adw.HeaderBar.new()
         self.battery_icon = Gtk.Image.new()
         header.pack_end(self.battery_icon)
