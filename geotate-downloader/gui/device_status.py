@@ -10,7 +10,7 @@ from gi.repository import GLib
 from gi.repository import Gtk
 from gi.repository import Adw
 
-from device import GeotateDevice, CaptureCapabilities
+from device import GeotateDevice, CaptureCapabilities, CaptureSettings
 from .detail_row import DetailRow
 
 import datetime as dt
@@ -55,9 +55,9 @@ class DeviceStatus(Adw.PreferencesPage):
         self.version = DetailRow("Version", "Unknown")
         group.add(self.version)
 
-        self.capture_capabilities = Adw.PreferencesGroup.new()
-        self.capture_capabilities.set_title("Capture capabilities")
-        self.add(self.capture_capabilities)
+        self.capture_settings = Adw.PreferencesGroup.new()
+        self.capture_settings.set_title("Capture settings")
+        self.add(self.capture_settings)
 
     def set_device(self, device: GeotateDevice):
         if device:
@@ -72,7 +72,10 @@ class DeviceStatus(Adw.PreferencesPage):
                                        b2s(device.capture_capabilites[CaptureCapabilities.BATTERY_MULTILEVEL])))
 
             row = DetailRow("Maximum capture count", str(device.maximum_capture_count))
-            self.capture_capabilities.add(row)
+            self.capture_settings.add(row)
+
+            row = DetailRow("Current capture count", str(len(device.capture_cache)))
+            self.capture_settings.add(row)
             caps = []
             if self.device.capture_capabilites[CaptureCapabilities.ONE_SHOT_CAPABLE]:
                 caps.append("one-shot")
@@ -80,19 +83,23 @@ class DeviceStatus(Adw.PreferencesPage):
                 caps.append("periodic")
             if self.device.capture_capabilites[CaptureCapabilities.CONTINUOUS_CAPABLE]:
                 caps.append("continuous")
-            self.capture_capabilities.add(DetailRow("Capture modes", ", ".join(caps)))
-            self.capture_capabilities.add(DetailRow("Can set capture interval", b2s(
-                self.device.capture_capabilites[CaptureCapabilities.INTERVAL_SETABLE])))
-            self.capture_capabilities.add(DetailRow("Can set capture quality", b2s(
-                self.device.capture_capabilites[CaptureCapabilities.INTERVAL_SETABLE])))
-            self.capture_capabilities.add(DetailRow("Can set capture delay", b2s(
-                self.device.capture_capabilites[CaptureCapabilities.INTERVAL_SETABLE])))
-            self.capture_capabilities.add(DetailRow("Can set capture divider", b2s(
-                self.device.capture_capabilites[CaptureCapabilities.INTERVAL_SETABLE])))
-            self.capture_capabilities.add(DetailRow("Can set “no motion” interval", b2s(
-                device.capture_capabilites[CaptureCapabilities.NO_MOTION_INTERVAL_AVAILABLE])))
-            self.capture_capabilities.add(DetailRow("Can set capture divider", b2s(
-                device.capture_capabilites[CaptureCapabilities.CAPTURE_DIVIDER])))
+            row = DetailRow("Capture mode", str(device.capture_config.mode))
+            row.set_subtitle(f"Supported modes: {', '.join(caps)}")
+            self.capture_settings.add(row)
+
+            self.capture_settings.add(DetailRow("Continuous", str(device.capture_config.delay),
+                                                "Settable: " + b2s(self.device.capture_capabilites[CaptureCapabilities.CONTINUOUS_CAPABLE])))
+            self.capture_settings.add(DetailRow("Interval", str(device.capture_config.interval),
+                                                "Settable: " + b2s(self.device.capture_capabilites[CaptureCapabilities.INTERVAL_SETABLE])))
+            self.capture_settings.add(DetailRow("Quality", str(device.capture_config.quality),
+                                                "Settable: " + b2s(self.device.capture_capabilites[CaptureCapabilities.INTERVAL_SETABLE])))
+            self.capture_settings.add(DetailRow("Delay", str(device.capture_config.delay),
+                                                "Settable: " + b2s(self.device.capture_capabilites[CaptureCapabilities.CAPTURE_DELAY_SETABLE])))
+            self.capture_settings.add(DetailRow("Divider", str(device.capture_config.delay),
+                                                "Settable: " + b2s(self.device.capture_capabilites[CaptureCapabilities.CAPTURE_DIVIDER])))
+            self.capture_settings.add(DetailRow("No motion interval", str(device.capture_config.delay),
+                                                "Settable: " + b2s(self.device.capture_capabilites[CaptureCapabilities.NO_MOTION_INTERVAL_AVAILABLE])))
+
 
         else:
             if self.rtc_timeout:

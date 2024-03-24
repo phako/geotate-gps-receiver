@@ -12,7 +12,7 @@ from gi.repository import Gtk
 
 
 class DetailRow(Adw.ActionRow):
-    def __init__(self, name, detail):
+    def __init__(self, name, detail, subtitle:str = None):
         super().__init__(title=name)
         l = Gtk.Label.new(detail)
         l.add_css_class("dim-label")
@@ -24,6 +24,8 @@ class DetailRow(Adw.ActionRow):
         self.add_suffix(l)
         self.set_title_lines(1)
         self.detail = l
+        if subtitle:
+            self.set_subtitle(subtitle)
 
     def set_detail(self, detail: str = None):
         if detail:
