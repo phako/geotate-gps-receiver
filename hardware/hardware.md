@@ -10,7 +10,7 @@ The following compontents are visible on the PCB (after RF shield removal):
 2. Two-color LED (Red/Green)
 3. USB Mini-B Port
 4. Manual capture toggle switch
-5. Supposedly a rakon GRM510 GPS receiver (no information available)
+5. Supposedly a rakon GRM6510 GPS receiver (no information available)
 6. Reset toggle switch 
 7. Battery and hot shoe connection points
 8. K9F2G08U0A 256Mx8bit Flash
