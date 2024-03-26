@@ -93,7 +93,7 @@ the information regarding information about the captures.
 
 ### LBA 4096 (0x1000)
 
-Start of the so-called GRE data. This is a binary header that, together with the
+Start of the capture header data. This is a binary header that, together with the
 capture data forms the contents of the SDF file as produced by the original
 downloading tool
 
