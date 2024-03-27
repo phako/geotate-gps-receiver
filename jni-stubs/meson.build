@@ -1,4 +1,4 @@
-project('taggr-native-stubs', 'cpp', version: '0.1')
+project('taggr-native-stubs', ['java', 'cpp'], version: '0.1')
 java = import('java')
 
 jni_dep = dependency('jni', version : '>=1.8', modules: ['jvm', 'awt'])
