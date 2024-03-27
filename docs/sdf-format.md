@@ -1,7 +1,7 @@
 # SDF file format
 
 The SDF format is equivalent to the binary header and the capture data.
-No processing is done on those components after getting them from the device.
+No modifcation of the data is done after getting them from the device.
 
 ## Important bytes
 

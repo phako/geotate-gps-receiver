@@ -2,7 +2,7 @@
 
 This is used to query or set various capture settings
 
-Configurability of certain settings depend on the corresponding capture capabilty flag see (lba1-description.md)
+Configurability of certain settings depend on the corresponding capture capabilty flag see [LBA 1](lba1-description.md)
 
 ## Important bytes
 

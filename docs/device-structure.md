@@ -27,26 +27,26 @@ the captured GPS data to be stored in reverse bit order.
 
 ### LBA 0
 
-Generic bootsector. See (lba0-description.md) for details.
+Generic bootsector. See [LBA 0](lba0-description.md) for details.
 
 ### LBA 1
 
 Device information, such as the device version, some UUIDs used for
 "verification" that the device is genuine and LBA numbers where to find the
-capture information. See (lba1-description.md) for details.
+capture information. See [LBA 1](lba1-description.md) for details.
 
 ### LBA 2
 
-Used to get and set the on-device real-time clock. See (lba2-description.md)
+Used to get and set the on-device real-time clock. See [LBA 2](lba2-description.md)
 for details.
 
 ### LBA 3
 
-The battery level. See (lba3-description.md) for details.
+The battery level. See [LBA 3](lba3-description.md) for details.
 
 ### LBA 4
 
-Configuration of the capture parameters. See (lba4-description.md) for details.
+Configuration of the capture parameters. See [LBA 4](lba4-description.md) for details.
 
 ### LBA 5
 
@@ -54,34 +54,36 @@ Used to erase capture data. Currently no details available.
 
 ### LBA 6
 
-Trigger a capture. See (lba6-description.md) for details.
+Trigger a capture. See [LBA 6](lba6-description.md) for details.
 
 ### LBA 7
 
 Entrypoint for querying the currently available captures. See
-(lba7-description.md) for details.
+[LBA 7](lba7-description.md) for details.
 
 ### LBA 8
 
 Write operation status. Used by the device to signalize a set operation is
-finished. See (lba8-description.md) for details.
+finished. See [LBA 8](lba8-description.md) for details.
 
 ### LBA 9
 
-Currently Unknown
+Currently Unknown, not used in the software
 
 ### LBA 10
 
-Currently Unknown
+Currently Unknown, not used in the software
 
 ### LBA 11
 
-Device id. See (lba11-description.md) for details.
+Device id. See [LBA 11](lba11-description.md) for details.
 
 ### LBA 12
 
 Used in clearing all capture data from the device. Currently no details
 available.
+
+## Base addresses
 
 The following offsets are specific for the devices I own, but could in theory
 be different for other devices, since they are stored in LBA1
@@ -93,10 +95,13 @@ the information regarding information about the captures.
 
 ### LBA 4096 (0x1000)
 
-Start of the capture header data. This is a binary header that, together with the
-capture data forms the contents of the SDF file as produced by the original
-downloading tool
+Start of the capture header data. Together with the capture data itself this forms
+the contents of the SDF file as produced by the original downloading tool. See [SDF](sdf-format.md)
+for details.
 
 ### LBA 8192 (0x2000)
 
-Start of the actual binary capture data
+Start of the actual binary capture data. The format of the data is currently unknown. 
+It is suggested that this is the downconverted raw GPS signal to an unknown IF
+(either around 4MHz or 1MHz). In the data visualisation there is clearly some counter
+visible at around bit 3543 in [data screenshot](hobbits-zoomed.png)

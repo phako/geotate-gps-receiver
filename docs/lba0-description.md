@@ -9,4 +9,4 @@ checks for a valid partition table and then goes on to try to boot.
 The device does not come with a valid partiton table, so it will just print
 "Invalid partition table" and wait infinitely.
 
-A disassembly can be found in (lba0-disassembly.txt)
+A disassembly can be found in [Bootsector disassembly](lba0-disassembly.txt)
